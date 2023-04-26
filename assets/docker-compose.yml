@@ -1,0 +1,29 @@
+version: "2.0"
+services:
+  servone:
+      build: sender
+      network_mode: "host"
+      ports:
+                - "$PORT1:$PORT1"
+  servtwo:
+        build: securesenderConnector
+        network_mode: "host"
+        ports:
+                - "$PORT2:$PORT2"
+  servthree:
+        build: securereceiverConnector
+        network_mode: "host"
+        ports:
+                - "$PORT3:$PORT3"
+  servfour:
+        build: receiver
+        network_mode: "host"
+        ports:
+                - "$PORT4:$PORT4"
+  servfive:
+        build: key
+        network_mode: "host"
+        ports:
+                - "$PORT5:$PORT5"
+
+                 

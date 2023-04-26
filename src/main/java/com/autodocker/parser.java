@@ -23,8 +23,16 @@ import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.*;
-
+import toolmanager.ToolManager;
 //private org.apache.commons.cli.ParseException CLIParseException;
+
+class ClassNameCollector extends VoidVisitorAdapter<List<String>>{
+              @Override
+              public void visit(ClassOrInterfaceDeclaration n, List<String> collector) {
+              super.visit(n, collector);
+              collector.add(n.getNameAsString());
+                                         }
+      }
 
 public class parser {
         //public org.apache.commons.cli.ParseException CLIParseException;
@@ -56,28 +64,7 @@ public class parser {
                     new RuntimeException(e);
                             }                                                                                                            
                                                 }*/
-/*public void parse(File filepath) throws IOException {
-       InputStream in = null;
-       CompilationUnit compunit=null;
-       try {
-                                                //InputStream in = SEDInputStream(this.filepath);
-            in = new FileInputStream(filepath);
-            compunit=JavaParser.parse(in);
-                                                                                    //find all class declarations
-    //        compunit.findAll(ClassOrInterfaceDeclaration.class).stream().filter(f -> !isStatic()).forEach(
-  //                                                                                                                  f -> componentsHMap.put(f.getName(),f.getDeclarationAsString()));   //add to hashmap
-//                                                                                                                                System.out.print(componentsHMap);   //print HashMap
-                                                                                                                                        }
-        catch(ParseException e) {
-                        //Parser exception handling
-              System.out.print(e.getMessage());
-                                }
-        finally {
-              in.close();
-                }
-         System.out.print(compunit);
-         return compunit;
-}*/
+
                                                                                 //}
     public String find(String keystring) {
                 //get content from hashmap
@@ -137,8 +124,12 @@ public class parser {
                     }
 
                         //inputpath=commandLine.getOptionValue("i");
-                        System.out.println("input path "+inputpath);
-                        System.out.println("output path "+outputpath);
+                        for(int i=0;i<inputpath.length();i++){
+                        System.out.print("=");
+                        }
+                        System.out.println("\nAUTODOCKER is starting with below initializations:");
+                        System.out.println("Input file path: "+inputpath);
+                        System.out.println("Output path: "+outputpath);
                         File file = new File(inputpath);
                         content = FileUtils.readFileToString(file);
                         //}
@@ -157,10 +148,78 @@ public class parser {
   //                 }
                       // listClasses(pathtojavafile);
   //                    parse(pathtojavafile);
+  //ArrayList<String> secClasses = new ArrayList<String>();
+  List<String> className = new ArrayList<>();
   CompilationUnit cu = StaticJavaParser.parse(content);
-  cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(f -> !f.isInterface() && !f.isAbstract()).forEach(
-                    f -> System.out.println(f.getName()));
-//  System.out.println(cu);
+  String[] secClasses = {"SecureSenderConnector","SecuritySenderCoordinator","SecureReceiverConnector","SecurityReceiverCoordinator"};
+
+  VoidVisitorAdapter<List<String>> classNameVisitor = new ClassNameCollector();
+  String prompt2="Classes found in input file";
+  System.out.println("\n"+prompt2);
+  for(int i=0;i<prompt2.length();i++){
+            System.out.print("=");
+                 }
+  System.out.println("\n");
+  
+  //cu.findAll(ClassOrInterfaceDeclaration.class).stream().filter(f -> !f.isInterface() && !f.isAbstract()).forEach(
+    //                f->System.out.println(f.getName()));
+  classNameVisitor.visit(cu,className);
+  className.forEach(n->System.out.println("Class name: "+n));
+  
+  ArrayList<String> components2create = new ArrayList<String>();
+  for(int m=0;m<className.size();m++){
+     //System.out.println("class name:"+m);
+     //System.out.println("sec class: "+secClasses[0]);
+      if("SecureSenderConnector".equals(className.get(m))){
+         components2create.add("securesenderConnector");
+          }
+
+      if("SecureReceiverConnector".equals(className.get(m))){
+          components2create.add("securereceiverConnector");
+          }
+          }
+ if(components2create.size()>1){
+      components2create.add("key");
+      }
+String prompt3="Creating components";
+System.out.println("\n"+prompt3);
+for(int i=0;i<prompt3.length();i++){
+        System.out.print("=");
+                                    }
+System.out.println("\n");
+for(String n:components2create){
+    System.out.println("Component: "+n);
+    }
+ String curdir = System.getProperty("user.dir");
+ ToolManager tm = new ToolManager(curdir,inputpath,outputpath);
+ String assetPath=curdir+"/assets/";
+System.out.println("\nCreating docker compose config file");
+tm.createEntities(assetPath+"/docker-compose.yml",outputpath+"/docker-compose.yml");
+String[] mvnfiles ={"mvnw","mvnw.cmd"};
+String[] javamainfiles={"key","securesenderConnector","securereceiverConnector"};
+System.out.println("Creating maven files");
+ for(String n:components2create){
+     tm.createdir(n);
+     tm.createdir(n+"/"+n+"_server");
+     tm.createdir(n+"/"+n+"_server/"+"src/main/java/com/"+n+"_server");
+     //tm.createdir(n+"/"+n+"_server/.mvn");
+          System.out.println("Creating directory for "+n+" component");
+          System.out.println("Creating Dockerfile for "+n+" component");
+          tm.createEntities(assetPath+n+"/Dockerfile",outputpath+n+"/Dockerfile");
+          System.out.println("Creating maven files for "+n+" component");
+          for(String mvn: mvnfiles){
+                   tm.createEntities(assetPath+"/"+mvn,outputpath+n+"/"+n+"_server/"+mvn);
+                  }
+
+System.out.println("Creating java files");
+tm.createEntities(assetPath+"/"+n+".java",outputpath+n+"/"+n+"_server/"+"src/main/java/com/"+n+"_server/"+n+".java");          
+          }
+ /*System.out.println("Creating java files");
+ for(String jvfile: components2create){
+        tm.createEntities(assetPath+"/"+jvfile,outputpath+n+"/"+n+"_server/"+"src/main/java/com/"+n+"_server/"+jvfile+".java");
+                   }*/
+
+
                }catch(IOException | org.apache.commons.cli.ParseException e){
                            System.out.println(e.getMessage());
                             }

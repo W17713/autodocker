@@ -1,1 +1,3 @@
 com/autodocker/parser.class
+toolmanager/ToolManager.class
+com/autodocker/ClassNameCollector.class
